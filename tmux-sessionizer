@@ -10,6 +10,8 @@ CONFIG_FILE="$CONFIG_DIR/tmux-sessionizer.conf"
 # # If set this add additional search paths to the default TS_SEARCH_PATHS
 # # The number prefix is the depth for the Path [OPTIONAL]
 # TS_EXTRA_SEARCH_PATHS=(~/ghq:3 ~/Git:3 ~/.config:2)
+# # If set this will ignore search paths the default is TS_IGNORE_PATHS()
+# TS_IGNORE_PATHS=()
 # # if set this override the TS_MAX_DEPTH (1)
 # TS_MAX_DEPTH=2
 # ------------------------
@@ -65,6 +67,9 @@ if [[ ${#TS_EXTRA_SEARCH_PATHS[@]} -gt 0 ]]; then
     TS_SEARCH_PATHS+=("${TS_EXTRA_SEARCH_PATHS[@]}")
 fi
 
+# if TS_IGNORE_PATHS is not set use default
+[[ -n "$TS_IGNORE_PATHS" ]] || TS_IGNORE_PATHS=()
+
 # utility function to find directories
 find_dirs() {
     # list TMUX sessions
@@ -97,7 +102,9 @@ find_dirs() {
 
         if [[ -d "$path" ]]; then
             find "$path" -mindepth 1 -maxdepth "${depth:-${TS_MAX_DEPTH:-1}}" \
-                -path '*/.git' -prune -o -type d -print | grep -vFx -f <(printf "%s\n" "${all_session_paths[@]}")
+                 -path '*/.git' -prune -o -type d -print | grep -vFxf <(printf \
+                 "%s\n" "${all_session_paths[@]}") | grep -vFxf <(printf "%s\n" \
+                 "${TS_IGNORE_PATHS[@]}")
         fi
     done
 }

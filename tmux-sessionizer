@@ -46,11 +46,23 @@ has_session() {
     tmux list-sessions | grep -q "^$1:"
 }
 
+find_local_config() {
+    dir="$1"
+
+    while [[ "$dir" != "/" ]]; do
+        if [[ -f "$dir/.tmux-sessionizer" ]]; then
+            echo "$dir/.tmux-sessionizer"
+            return
+        fi
+        dir=$(dirname "$dir")
+    done
+}
+
 hydrate() {
-    if [ -f "$2/.tmux-sessionizer" ]; then
-        tmux send-keys -t "$1" "source $2/.tmux-sessionizer" c-M
-    elif [ -f "$HOME/.tmux-sessionizer" ]; then
-        tmux send-keys -t "$1" "source $HOME/.tmux-sessionizer" c-M
+    local_conf=$(find_local_config "$2")
+
+    if [[ -n "$local_conf" ]]; then
+        tmux send-keys -t "$1" "source $local_conf" C-m
     fi
 }
 
